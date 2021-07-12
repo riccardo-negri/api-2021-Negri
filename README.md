@@ -2,6 +2,6 @@
 [Link Verificatore](https://dum-e.deib.polimi.it/)
 
 Comando per compilare (C11/gcc) :
-```sh
-/usr/bin/gcc -DEVAL -Wall -Werror -std=gnu11 -O2 -pipe -static -s -o Open Open.c -lm
+```shell
+/usr/bin/gcc -DEVAL -Wall -Werror -std=gnu11 -O2 -pipe -static -s -o main main.c -lm
 ```
