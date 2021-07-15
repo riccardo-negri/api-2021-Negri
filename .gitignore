@@ -1,2 +1,7 @@
 #files
 main
+output
+.gdb_history
+
+#tests
+tests/
