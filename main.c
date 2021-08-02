@@ -7,13 +7,13 @@
 
 typedef struct node {
    unsigned int id;
-   unsigned int dist;	// I use this variable with two different meaning depending on the context
+   unsigned long long int dist;	// I use this variable with two different meaning depending on the context
    struct node * next;	// I add to this only the nodes reachable by the current node with their distance
 } node_type;
 
 typedef struct graph {
    unsigned int index;
-   unsigned int value;
+   unsigned long long int value;
 } graph_type;
 
 unsigned int ReadGraph(unsigned int d);
@@ -30,12 +30,12 @@ void BestGraphs(graph_type * ranking, unsigned int array_dim);
 int main(int argc, char const *argv[])
 {
 	unsigned int d = 0; // number of nodes
-	unsigned int temp = getchar_unlocked();
+	char temp = getchar_unlocked();
 
 	unsigned int k = 0; // length of top graphs
 
 	unsigned int index = 0;
-	unsigned int paths_sum;
+	unsigned long long int paths_sum;
 
 	unsigned int ranking_length = 0;
 
@@ -69,7 +69,7 @@ int main(int argc, char const *argv[])
 			index ++;
 		}
 
-		else if (temp == 'T') {
+		else if (temp == 'K') {
 			BestGraphs(ranking, ranking_length);
 		}
 
@@ -83,7 +83,7 @@ int main(int argc, char const *argv[])
 
 unsigned int ReadGraph(unsigned int d) {
 
-	unsigned int temp = getchar_unlocked();	// get at the start of the matrix
+	
 	node_type * pt;
 	node_type * temp_pt;
 	unsigned int j;
@@ -92,8 +92,10 @@ unsigned int ReadGraph(unsigned int d) {
 	unsigned int nodes_left = d;
 	unsigned int min_id;
 	unsigned int start_minheap = 0;
+
+	char temp = getchar_unlocked();	// get at the start of the matrix
 	
-	node_type * F_main = malloc(sizeof(node_type)*d); // F_main is set of nodes that are yet to achieve final distance estimates
+	node_type F_main[d]; // F_main is set of nodes that are yet to achieve final distance estimates
 	unsigned int F_minheap[d]; // this is gonna be tha actual MIN-HEAP
 	
 	while (temp != '\n') {
@@ -159,7 +161,8 @@ unsigned int ReadGraph(unsigned int d) {
 			pt = pt->next;
 			free(temp_pt);
 		}
-		
+		free(F_main[min_id].next);
+		free(pt);
 		minpaths_sum = minpaths_sum + F_main[min_id].dist;
 
 		nodes_left--;
@@ -193,7 +196,7 @@ unsigned int ReadGraph(unsigned int d) {
 		printf("\n");*/
 	}
 
-	free(F_main);
+	
 
 	//printf("Somma cammini: %u \n", minpaths_sum);
 	//printf("--------------");
