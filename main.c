@@ -1,5 +1,4 @@
 // My solution for Algoritmi e Principi dell'Informatica 2020-2021's project
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -7,317 +6,257 @@
 
 typedef struct node {
    unsigned int id;
-   unsigned long long int dist;	// I use this variable with two different meaning depending on the context
-   struct node * next;	// I add to this only the nodes reachable by the current node with their distance
+   unsigned int dist;
 } node_type;
 
 typedef struct graph {
    unsigned int index;
-   unsigned long long int value;
+   unsigned long int value;
 } graph_type;
 
-unsigned int ReadGraph(unsigned int d);
-unsigned int DeleteMin(unsigned int * F_minheap, unsigned int start_minheap);
-void RebuildMinHeap (node_type * F_main, unsigned int * F_minheap, unsigned int heapsize, unsigned int i);
-void MinHeapify (node_type * F_main, unsigned int * F_minheap, unsigned int array_dim, unsigned int i, unsigned int start_minheap);
+void MinHeapify(node_type * min_heap, unsigned int d, unsigned int heap_start, unsigned int i) {
+	unsigned int l, r, min, temp_id, temp_dist;
+	l = 2*(i-heap_start)+heap_start;
+	r = l+1;
+	if (l < d && min_heap[l].dist < min_heap[i].dist) min = l;
+	else min = i;
 
-void AddGraph(unsigned int value, unsigned int index, graph_type * ranking, unsigned int ranking_length, unsigned int k);
-void RebuildMaxHeap (graph_type * ranking, unsigned int array_dim);
-void MaxHeapify (graph_type * ranking, unsigned int array_dim, unsigned int i);
+	if (r < d && min_heap[r].dist < min_heap[min].dist) min = r;
 
-void BestGraphs(graph_type * ranking, unsigned int array_dim);
-
-int main(int argc, char const *argv[])
-{
-	unsigned int d = 0; // number of nodes
-	char temp = getchar_unlocked();
-
-	unsigned int k = 0; // length of top graphs
-
-	unsigned int index = 0;
-	unsigned long long int paths_sum;
-
-	unsigned int ranking_length = 0;
-
-	while(temp != ' ') {
-		d = d*10 + temp-'0';
-		temp = getchar_unlocked();	
-	}
-	
-	temp = getchar_unlocked();
-	while(temp != '\n') {
-		k = k*10 + temp-'0';
-		temp = getchar_unlocked();	
+	if (min != i) {
+		temp_id = min_heap[i].id;
+		temp_dist = min_heap[i].dist;
+		min_heap[i].id = min_heap[min].id;
+		min_heap[i].dist = min_heap[min].dist;
+		min_heap[min].id = temp_id;
+		min_heap[min].dist = temp_dist;
+		MinHeapify(min_heap, d, heap_start, min);
 	}
 
-	//long long int blank=0;
-	graph_type ranking[k]; //max heap to keep the best graphs
-	//long long int blank2=0;
-
-	//printf("STARTED %lld %lld\n", blank, blank2);
-	//printf("%d %d \n", d, k);
-
-	while(temp != EOF) {
-
-		if (temp == 'A') {
-			paths_sum = ReadGraph(d);	// returns the sum of all the minimum paths from zero
-			
-			AddGraph(paths_sum, index, ranking, ranking_length, k);
-			if (ranking_length < k) {
-				ranking_length++;
-			}
-			index ++;
-		}
-
-		else if (temp == 'K') {
-			BestGraphs(ranking, ranking_length);
-		}
-
-		temp = getchar_unlocked();
-	}	
-
-	//printf("FINISHED\n");
-
-	return 0;
+	return;
 }
 
-unsigned int ReadGraph(unsigned int d) {
+void MaxHeapify(graph_type * max_heap, unsigned int k, unsigned int i) {
+	unsigned int max, temp_index;
+	unsigned long int temp_value;
+	unsigned int l = 2*i;
+	unsigned int r = l+1;
 
-	
-	node_type * pt;
-	node_type * temp_pt;
-	unsigned int j;
-	unsigned int num;
-	unsigned int minpaths_sum = 0;
-	unsigned int nodes_left = d;
-	unsigned int min_id;
-	unsigned int start_minheap = 0;
+	if (l < k && max_heap[l].value > max_heap[i].value) max = l;
+	else max = i;
 
-	char temp = getchar_unlocked();	// get at the start of the matrix
-	
-	node_type F_main[d]; // F_main is set of nodes that are yet to achieve final distance estimates
-	unsigned int F_minheap[d]; // this is gonna be tha actual MIN-HEAP
-	
-	while (temp != '\n') {
-		temp = getchar_unlocked();	
+	if (r < k && max_heap[r].value > max_heap[max].value) max = r;
+	//printf("--> %lu, %lu. max:%u, i:%u\n", max_heap[l].value, max_heap[i].value, max, i);
+	if (max != i) {
+		temp_index = max_heap[i].index;
+		temp_value = max_heap[i].value;
+		max_heap[i].index = max_heap[max].index;
+		max_heap[i].value = max_heap[max].value;
+		max_heap[max].index = temp_index;
+		max_heap[max].value = temp_value;
+		MaxHeapify(max_heap, k, max);
 	}
 
-	for (unsigned int i = 0; i < d; i++){	// read the graph
-		F_main[i].id = i;
-		F_minheap[i] = i;
-		F_main[i].dist = INFINITY; // set initial distance estimate
-		node_type * last_added = &F_main[i];
-		for (j = 0; j< d; j++) {
-			temp = getchar_unlocked();
-			num = 0;
-			while (temp != ',' && temp != '\n') {
-				num = 10*num + temp-'0';
-				temp = getchar_unlocked();
-			}
-			if (num != 0) {
-				last_added->next = malloc(sizeof(node_type));
-				last_added = last_added->next;
-				last_added->id = j;
-				last_added->dist = num;
-			}
-		}
-		last_added->next = NULL;
-	}
-	F_main[0].dist=0;
+	return;
+}
 
-	// print F_main
-	/*for (int w = 0; w < d; w++) {
-		printf("id:%u dist:%u ", F_main[w].id, F_main[w].dist);
-		pt = F_main[w].next;
-		while (pt != NULL) {
-			printf("- node:%u dist:%u ", pt->id, pt->dist);
-			pt = pt->next;
+void StampaMatrice(unsigned int dim, unsigned int matrix[dim][dim]) {
+	unsigned int i, j;
+	for (i = 0; i < dim; i++) {
+		for (j = 0; j < dim; j++) {
+			printf("%u ", matrix[i][j]);
 		}
 		printf("\n");
 	}
-	// print F_minheap
-	printf("Minheap: ");
-	for (int w = 0; w < d; w++) {
-		printf("%d ", F_minheap[w]);
-	}
-	printf("\n");*/
-
-	nodes_left = d;
-	while (nodes_left != 0) {
-		min_id = DeleteMin(F_minheap, start_minheap); // this modified delete min will actually put my min in the last place of the array so i can use it easily
-		start_minheap++;
-		if (F_main[min_id].dist == INFINITY) {
-			//printf("Not connected graph from here");
-			return minpaths_sum;
-		}
-		//printf("Here ");
-		
-		pt = F_main[min_id].next;
-		while (pt != NULL) {	//WARNING A LOT TO BE OPTIMIZED
-			if(F_main[pt->id].dist > F_main[min_id].dist + pt->dist) {
-				F_main[pt->id].dist = F_main[min_id].dist + pt->dist;
-			}
-			temp_pt = pt;
-			pt = pt->next;
-			free(temp_pt);
-		}
-		free(F_main[min_id].next);
-		free(pt);
-		minpaths_sum = minpaths_sum + F_main[min_id].dist;
-
-		nodes_left--;
-
-		if (nodes_left != 0) {
-			//printf("\n\nRebuilding minheap with this value %u and index %u\n", F_main[min_id].dist, min_id);
-
-			//printf("Minheap before rebuild: ");
-			//for (int i=start_minheap; i<d; i++) {
-			//	printf("%u-%u ", F_minheap[i], F_main[F_minheap[i]].dist);
-			//}
-			//
-			RebuildMinHeap(F_main, F_minheap, start_minheap, d); // now that the distances have changes the MIN-HEAP must be updated
-			//
-			//printf("\nMinheap After rebuild: ");
-			//for (int i=start_minheap; i<d; i++) {
-			//	printf("%u-%u ", F_minheap[i], F_main[F_minheap[i]].dist);
-			//}
-		}
-		if (nodes_left == 0 && start_minheap == d) {
-			//printf("----------");
-		}
-		//printf("Maxheap after: \n");
-		//for (int i = 0; i < array_dim; i++) {
-		//	printf("%u-%u ", ranking[i].index, ranking[i].value);
-		//}
-/*		printf("Minheap: ");
-		for (int w = start_minheap; w < d; w++) {
-			printf("%d ", F_minheap[w]);
-		}
-		printf("\n");*/
-	}
-
-	
-
-	//printf("Somma cammini: %u \n", minpaths_sum);
-	//printf("--------------");
-	return minpaths_sum;
-}
-
-unsigned int DeleteMin(unsigned int * F_minheap, unsigned int start_minheap) {
-	return F_minheap[start_minheap];
-}
-
-void RebuildMinHeap (node_type * F_main, unsigned int * F_minheap, unsigned int start_minheap, unsigned int array_dim) {
-	unsigned int heapsize = array_dim - start_minheap;
-	
-	for (int i = (heapsize/2)+start_minheap; i >= start_minheap; i--) {
-		MinHeapify(F_main, F_minheap, array_dim, i, start_minheap);
-	}
-	
+	fflush( stdout );
 	return;
 }
 
-void MinHeapify (node_type * F_main, unsigned int * F_minheap, unsigned int array_dim, unsigned int i, unsigned int start_minheap) {
-	unsigned int temp, min;
-	unsigned int l = 2*(i-start_minheap)+start_minheap;
-	unsigned int r = 2*(i-start_minheap)+1+start_minheap;
-	if (l < array_dim && F_main[F_minheap[l]].dist < F_main[F_minheap[i]].dist) {
-		min = l;
-	}
-	else {
-		min = i;
-	}
-
-	if (r < array_dim && F_main[F_minheap[r]].dist < F_main[F_minheap[min]].dist){
-		min = r;
-	}
-
-	if (min != i){
-		temp = F_minheap[i];
-		F_minheap[i] = F_minheap[min];
-		F_minheap[min] = temp;
-		MinHeapify(F_main, F_minheap, array_dim, min, start_minheap);
-	}
-	return;
-}
-
-void AddGraph(unsigned int value, unsigned int index, graph_type * ranking, unsigned int ranking_length, unsigned int k) {
-	unsigned int array_dim = ranking_length;
-	if (array_dim < k) {
-		ranking[array_dim].index = index;
-		ranking[array_dim].value = value;
-		array_dim++;
-		RebuildMaxHeap(ranking, array_dim);
-	}
-	else {
-		if (value < ranking[0].value) {
-			ranking[0].index = index;
-			ranking[0].value = value;
-			//printf("CALLIN REBUILD con dim %d ", array_dim);
-			RebuildMaxHeap(ranking, array_dim);
-		}
-	}
-
-	//printf("\nAdding graph with value %u and index %u\n", value, index);
-	//printf("Maxheap after: \n");
-	//for (int i = 0; i < array_dim; i++) {
-	//	printf("%u-%u ", ranking[i].index, ranking[i].value);
-	//}
-
-	return;
-}
-
-void RebuildMaxHeap (graph_type * ranking, unsigned int array_dim) {
-	int i = array_dim/2;
-	//printf("I vale %d ", i);
-	for (; i >= 0; i--) {
-		//printf("MAXHEAPIFY");
-		MaxHeapify(ranking, array_dim, i);
-	}
-	
-	return;
-}
-
-void MaxHeapify (graph_type * ranking, unsigned int array_dim, unsigned int i) {
-	unsigned int temp_ind, temp_value, max;
-	unsigned int l = 2*i;
-	unsigned int r = 2*i+1;
-	if (l < array_dim && ranking[l].value > ranking[i].value) {
-		max = l;
-	}
-	else {
-		max = i;
-	}
-
-	if (r < array_dim && ranking[r].value > ranking[max].value){
-		max = r;
-	}
-
-	if (max != i){
-		//printf("SWAPPING");
-		temp_ind = ranking[i].index;
-		temp_value = ranking[i].value;
-		ranking[i].index = ranking[max].index;
-		ranking[i].value = ranking[max].value;
-		ranking[max].index = temp_ind;
-		ranking[max].value = temp_value;
-		MaxHeapify(ranking, array_dim, max);
-	}
-	return;
-}
-
-void BestGraphs(graph_type * ranking, unsigned int array_dim) {
-	//printf("\nBest graphs: \n");
-	int start = 1;
-	for (int i = 0; i < array_dim; i++) {
+void StampaMinHeap(node_type * min_heap, unsigned int heap_start, unsigned int d) {
+	unsigned int i;
+	unsigned int start = 1;
+	printf("[");
+	for (i = heap_start; i < d; i++) {
 		if (start == 1) {
-			printf("%d", ranking[i].index);
 			start = 0;
+			printf("{id:%u, dist:%u}", min_heap[i].id, min_heap[i].dist);
 		}
-		else {
-			printf(" %d", ranking[i].index);
-		}
+		else printf("\n{id:%u, dist:%u}", min_heap[i].id, min_heap[i].dist);
 	}
-	printf("\n");
-	return;
+	printf("]\n");
+	fflush( stdout );
+}
+
+void StampaMaxHeap(graph_type * min_heap, unsigned int d) {
+	unsigned int i;
+	unsigned int start = 1;
+	printf("[");
+	for (i = 0; i < d; i++) {
+		if (start == 1) {
+			start = 0;
+			printf("{ind:%u, value:%lu}", min_heap[i].index, min_heap[i].value);
+		}
+		else printf("\n{ind:%u, value:%lu}", min_heap[i].index, min_heap[i].value);
+	}
+	printf("]\n");
+	fflush( stdout );
+}
+
+int main() {
+	unsigned int d = 0; // number of nodes
+	char char_letto;
+	unsigned int k = 0; // length of top graphs ranking
+	unsigned int row;
+	unsigned int col;
+	unsigned int temp_num;
+	unsigned int i, j, curr_min_id, curr_min_dist, ndist, arch_weigth, heapsize, heap_start;
+	unsigned long int somma_cammini;
+	unsigned int elementi_classifica = 0;
+	unsigned int indice_grafo_corr = 0;
+	long int w; // lo uso in loop dove può diventare -1, in realtà in uno no e in uno sì
+
+	char_letto = getchar_unlocked();
+	while(char_letto != ' ') {
+		d = d*10 + char_letto-'0';
+		char_letto = getchar_unlocked();	
+	}
+	
+	char_letto = getchar_unlocked();
+	while(char_letto != '\n') {
+		k = k*10 + char_letto-'0';
+		char_letto = getchar_unlocked();	
+	}
+
+	//printf("Dati letti: d è %u, k è %u\n", d, k);
+	fflush( stdout );
+
+	unsigned int matrice_adiacenza[d][d];
+	node_type min_heap_dijkstra[d];
+	graph_type classifica[k];
+
+	while(char_letto != EOF) {
+
+		if (char_letto == 'A') {
+			// --> Lettura e importazione
+			while (char_letto != '\n') {
+				char_letto = getchar_unlocked();	
+			}
+			for (row = 0; row < d; row++) {
+				min_heap_dijkstra[row].id = row;
+				min_heap_dijkstra[row].dist = INFINITY;
+				for (col = 0; col < d; col++) {
+					char_letto = getchar_unlocked();
+					temp_num = 0;
+					while (char_letto != ',' && char_letto != '\n') {
+						temp_num = 10*temp_num + char_letto-'0';
+						char_letto = getchar_unlocked();
+					}
+					matrice_adiacenza[row][col] = temp_num;
+				}
+			}
+
+			//StampaMatrice(d, matrice_adiacenza);
+
+			//printf("HERE");
+			//fflush( stdout );
+
+			// --> Calcolo somma cammini
+			min_heap_dijkstra[0].dist = 0;
+			somma_cammini = 0;
+			for (i = 0; i < d; i++) {
+				curr_min_id = min_heap_dijkstra[i].id;
+				curr_min_dist =  min_heap_dijkstra[i].dist;
+				if(curr_min_dist < INFINITY) {
+					somma_cammini += curr_min_dist;
+				}
+				else {
+					break;
+				}
+				//printf("Qui, curr min id: %u\n", curr_min_id);
+				fflush( stdout );
+				for (j = i+1; j<d; j++) {
+					arch_weigth = matrice_adiacenza[curr_min_id][min_heap_dijkstra[j].id];
+					if (arch_weigth != 0) {
+						ndist = curr_min_dist + arch_weigth;
+						if (min_heap_dijkstra[j].dist > ndist) {
+							min_heap_dijkstra[j].dist = ndist;
+						}
+					}
+				}
+				// --> Rimetto in ordine il MinHeap ((heapsize/2)+heap_start; i >= heap_start+1; i--)
+				heapsize = d-i-1;
+				heap_start = i+1;
+				//printf("Parto con MinHeapify: heapsize of %u, heap start at %u\n", heapsize, heap_start);
+				fflush( stdout );
+				//StampaMinHeap(min_heap_dijkstra, heap_start, d);
+
+				for (w = ((heapsize)/2)+heap_start; w >= heap_start; w--) {
+					//printf("w:%lu\n", w);
+					MinHeapify(min_heap_dijkstra, d, heap_start, w);
+				}
+
+				//printf("Finito di sistemare il MinHeap\n");
+				//StampaMinHeap(min_heap_dijkstra, heap_start, d);
+				//printf("\n");
+				fflush( stdout );
+			}
+
+			// --> Inserimento nella classifica dei grafi
+			//printf("{ind:%u, value:%lu}\n", indice_grafo_corr, somma_cammini);
+
+			if (elementi_classifica < k) {
+				classifica[elementi_classifica].index = indice_grafo_corr;
+				classifica[elementi_classifica].value = somma_cammini;
+				elementi_classifica++;
+				//printf("%u", elementi_classifica);
+				//fflush( stdout );
+			}
+			else {
+				// Prima sistemo la classifica, poi tolgo il più grande se è il caso
+				//if(somma_cammini < classifica[0].value || somma_cammini < classifica[1].value || somma_cammini < classifica[2].value) {
+					
+					//printf("Parto con MaxHeapify, ciclo num %ld\n", w);
+					//StampaMaxHeap(classifica, elementi_classifica);
+					
+					for (w = k/2; w >= 0; w--) {
+						MaxHeapify(classifica, k, w);	
+					}
+
+					//StampaMaxHeap(classifica, elementi_classifica);
+					//printf("Finito di sistemare MaxHeap\n");
+					//printf("\n");
+					
+
+					if (somma_cammini < classifica[0].value) {
+						classifica[0].value = somma_cammini;
+						classifica[0].index = indice_grafo_corr;
+					}
+				//}
+			}
+
+			// Contatore
+			indice_grafo_corr++;
+		}
+
+		// --> TopK
+		else if (char_letto == 'K') {
+			// --> Stampa classifica
+			//printf("Stampa classifica: \n");
+			fflush( stdout );
+
+			int start = 1;
+			for (int i = 0; i < elementi_classifica; i++) {
+				if (start == 1) {
+					printf("%d", classifica[i].index);
+					start = 0;
+				}
+				else {
+					printf(" %d", classifica[i].index);
+				}
+			}
+			printf("\n");
+		}
+
+		char_letto = getchar_unlocked();
+	}	
 }
