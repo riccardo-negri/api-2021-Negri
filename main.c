@@ -12,6 +12,8 @@ typedef struct node {
 typedef struct graph {
    unsigned int index;
    unsigned long int value;
+   struct graph * next;
+   struct graph * prev;
 } graph_type;
 
 void MinHeapify(node_type * min_heap, unsigned int d, unsigned int heap_start, unsigned int i) {
@@ -36,29 +38,16 @@ void MinHeapify(node_type * min_heap, unsigned int d, unsigned int heap_start, u
 	return;
 }
 
-void MaxHeapify(graph_type * max_heap, unsigned int testa_heap, unsigned int heapsize, unsigned int i) {
-	unsigned int max, temp_index, l, r;
+void MaxHeapify(graph_type * max_heap, unsigned int k, unsigned int i) {
+	unsigned int max, temp_index;
 	unsigned long int temp_value;
+	unsigned int l = 2*i;
+	unsigned int r = l+1;
 
-	// l = 2*i, r = 2*i+1
-	if (i >= testa_heap) {
-		// tutto testato
-		l = 2*(i-testa_heap)+testa_heap+1;
-		r = l+1;
-		if(l >= heapsize && l-heapsize < testa_heap) l = l-heapsize;
-		if(r >= heapsize && r-heapsize < testa_heap) r = r-heapsize;
-	}
-	else {
-		l = 2*(i+heapsize-testa_heap)-(heapsize-testa_heap)+1;
-		r = l+1;
-		if( l >= testa_heap) l = heapsize;
-		if( r >= testa_heap) r = heapsize;
-	}
-
-	if (l < heapsize && max_heap[l].value > max_heap[i].value) max = l;
+	if (l < k && max_heap[l].value > max_heap[i].value) max = l;
 	else max = i;
 
-	if (r < heapsize && max_heap[r].value > max_heap[max].value) max = r;
+	if (r < k && max_heap[r].value > max_heap[max].value) max = r;
 	//printf("--> %lu, %lu. max:%u, i:%u\n", max_heap[l].value, max_heap[i].value, max, i);
 	if (max != i) {
 		temp_index = max_heap[i].index;
@@ -67,7 +56,7 @@ void MaxHeapify(graph_type * max_heap, unsigned int testa_heap, unsigned int hea
 		max_heap[i].value = max_heap[max].value;
 		max_heap[max].index = temp_index;
 		max_heap[max].value = temp_value;
-		MaxHeapify(max_heap, testa_heap, heapsize, max);
+		MaxHeapify(max_heap, k, max);
 	}
 
 	return;
@@ -122,12 +111,15 @@ int main() {
 	unsigned int row;
 	unsigned int col;
 	unsigned int temp_num;
-	unsigned int i, j, q, curr_min_id, curr_min_dist, ndist, arch_weigth, heapsize, heap_start;
+	unsigned int i, j, curr_min_id, curr_min_dist, ndist, arch_weigth, heapsize, heap_start;
 	unsigned long int somma_cammini;
 	unsigned int elementi_classifica = 0;
 	unsigned int indice_grafo_corr = 0;
-	unsigned int testa_heap = 0;
 	long int w; // lo uso in loop dove può diventare -1, in realtà in uno no e in uno sì
+	graph_type * minimo_testa_lista = NULL;
+	graph_type * massimo_coda_lista = NULL;
+	graph_type * p_temp; 
+	graph_type * ex_massimo;
 
 	char_letto = getchar_unlocked();
 	while(char_letto != ' ') {
@@ -147,6 +139,8 @@ int main() {
 	unsigned int matrice_adiacenza[d][d];
 	node_type min_heap_dijkstra[d];
 	graph_type classifica[k];
+	minimo_testa_lista = classifica;
+	massimo_coda_lista = classifica;
 
 	while(char_letto != EOF) {
 
@@ -216,43 +210,105 @@ int main() {
 			}
 
 			// --> Inserimento nella classifica dei grafi
-			//printf("{ind:%u, value:%lu}\n", indice_grafo_corr, somma_cammini);
-
 			if (elementi_classifica < k) {
 				classifica[elementi_classifica].index = indice_grafo_corr;
 				classifica[elementi_classifica].value = somma_cammini;
 				elementi_classifica++;
-				//printf("%u", elementi_classifica);
-				//fflush( stdout );
+				if(elementi_classifica == 2) {
+					if(classifica[0].value < classifica[1].value){
+						minimo_testa_lista = &classifica[0];
+						massimo_coda_lista = &classifica[1];
+						classifica[0].next = &classifica[1];
+						classifica[0].prev = NULL;
+						classifica[1].next = NULL;
+						classifica[1].prev = &classifica[0];
+					}
+					else {
+						minimo_testa_lista = &classifica[1];
+						massimo_coda_lista = &classifica[0];
+						classifica[1].next = &classifica[0];
+						classifica[1].prev = NULL;
+						classifica[0].next = NULL;
+						classifica[0].prev = &classifica[1];
+					}
+				}	
+				else if (elementi_classifica > 2) {
+					p_temp = minimo_testa_lista;
+					if(p_temp->value > somma_cammini) {
+						classifica[elementi_classifica-1].next = minimo_testa_lista;
+						classifica[elementi_classifica-1].prev = NULL;
+						minimo_testa_lista->prev = &classifica[elementi_classifica-1];
+						minimo_testa_lista = &classifica[elementi_classifica-1];
+					}
+					else {
+						while(p_temp->next != NULL) {
+							if(p_temp->next->value > somma_cammini) {
+								classifica[elementi_classifica-1].next = p_temp->next;
+								classifica[elementi_classifica-1].prev = p_temp;
+								p_temp->next->prev = &classifica[elementi_classifica-1];
+								p_temp->next = &classifica[elementi_classifica-1];
+								break;
+							}
+							p_temp = p_temp->next;
+						}
+						if(p_temp->next == NULL) {
+							p_temp->next = &classifica[elementi_classifica-1];
+							classifica[elementi_classifica-1].prev = p_temp;
+							classifica[elementi_classifica-1].next = NULL;
+							massimo_coda_lista = &classifica[elementi_classifica-1];
+						}
+					}
+
+				}
 			}
 			else {
-				// Prima sistemo la classifica, poi tolgo il più grande se è il caso
-				//if(somma_cammini < classifica[0].value || somma_cammini < classifica[1].value || somma_cammini < classifica[2].value) {
-					
-					//printf("Parto con MaxHeapify, ciclo num %ld\n", w);
-					//StampaMaxHeap(classifica, elementi_classifica);
-					
-					for (w = k/2; w >= 0; w--) {
-						q = w + testa_heap;
-						if (q >= k) q = q - k;
-						MaxHeapify(classifica, testa_heap, k, q);	
+				if (somma_cammini < massimo_coda_lista->value) {
+					// lo aggiungo dalla testa per superare i test della famiglia 5
+					if (somma_cammini < minimo_testa_lista->value) {
+						ex_massimo = massimo_coda_lista;
+						massimo_coda_lista = massimo_coda_lista->prev;
+						massimo_coda_lista->next = NULL;
+						ex_massimo->index = indice_grafo_corr;
+						ex_massimo->value = somma_cammini;
+						ex_massimo->prev = NULL;
+						ex_massimo->next = minimo_testa_lista;
+						minimo_testa_lista->prev = ex_massimo;
+						minimo_testa_lista = ex_massimo;
+						
 					}
-
-					
-					//StampaMaxHeap(classifica, elementi_classifica);
-					//printf("Finito di sistemare MaxHeap\n");
-					//printf("\n");
-					
-
-					if (somma_cammini < classifica[testa_heap].value) {
-						classifica[testa_heap].value = somma_cammini;
-						classifica[testa_heap].index = indice_grafo_corr;
-						testa_heap++;
-						if (testa_heap == k) testa_heap = 0;
+					else {
+						p_temp = minimo_testa_lista->next;
+						while(p_temp->next != NULL) {
+							if (somma_cammini < p_temp->value) {
+								ex_massimo = massimo_coda_lista;
+								massimo_coda_lista = massimo_coda_lista->prev;
+								massimo_coda_lista->next = NULL;
+								ex_massimo->index = indice_grafo_corr;
+								ex_massimo->value = somma_cammini;
+								ex_massimo->prev = p_temp->prev;
+								ex_massimo->next = p_temp;
+								p_temp->prev = ex_massimo;
+								ex_massimo->prev->next = ex_massimo;
+								break;
+							}
+							p_temp = p_temp->next;
+						}
+						if(p_temp->next == NULL && somma_cammini < p_temp->value) {
+							massimo_coda_lista->index = indice_grafo_corr;
+							massimo_coda_lista->value = somma_cammini;
+						}
 					}
-				//}
+				}
+				
 			}
 
+			//p_temp = minimo_testa_lista;
+			//printf("-------------\n");
+			//while(p_temp != NULL) {
+			//	printf("{ind: %u, value: %lu}\n", p_temp->index, p_temp->value);
+			//	p_temp = p_temp->next;
+			//}
+			
 			// Contatore
 			indice_grafo_corr++;
 		}
