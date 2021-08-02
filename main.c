@@ -108,10 +108,10 @@ int main() {
 	unsigned int d = 0; // number of nodes
 	char char_letto;
 	unsigned int k = 0; // length of top graphs ranking
+	unsigned int i, j, curr_min_id, curr_min_dist, ndist, arch_weigth, heapsize, heap_start, flag;
 	unsigned int row;
-	unsigned int col;
 	unsigned int temp_num;
-	unsigned int i, j, curr_min_id, curr_min_dist, ndist, arch_weigth, heapsize, heap_start;
+	unsigned int col;
 	unsigned long int somma_cammini;
 	unsigned int elementi_classifica = 0;
 	unsigned int indice_grafo_corr = 0;
@@ -262,6 +262,7 @@ int main() {
 				}
 			}
 			else {
+				flag = 0;
 				if (somma_cammini < massimo_coda_lista->value) {
 					// lo aggiungo dalla testa per superare i test della famiglia 5
 					if (somma_cammini < minimo_testa_lista->value) {
@@ -274,7 +275,7 @@ int main() {
 						ex_massimo->next = minimo_testa_lista;
 						minimo_testa_lista->prev = ex_massimo;
 						minimo_testa_lista = ex_massimo;
-						
+						flag = 1;
 					}
 					else {
 						p_temp = minimo_testa_lista->next;
@@ -282,20 +283,25 @@ int main() {
 							if (somma_cammini < p_temp->value) {
 								ex_massimo = massimo_coda_lista;
 								massimo_coda_lista = massimo_coda_lista->prev;
-								massimo_coda_lista->next = NULL;
+								
 								ex_massimo->index = indice_grafo_corr;
 								ex_massimo->value = somma_cammini;
 								ex_massimo->prev = p_temp->prev;
 								ex_massimo->next = p_temp;
 								p_temp->prev = ex_massimo;
 								ex_massimo->prev->next = ex_massimo;
+								massimo_coda_lista->next = NULL;
+								flag = 1;
 								break;
+								
 							}
 							p_temp = p_temp->next;
 						}
-						if(p_temp->next == NULL && somma_cammini < p_temp->value) {
+						// ultimo
+						if(p_temp->next == NULL && somma_cammini < p_temp->value && flag == 0) {
 							massimo_coda_lista->index = indice_grafo_corr;
 							massimo_coda_lista->value = somma_cammini;
+							flag = 1;
 						}
 					}
 				}
@@ -311,6 +317,7 @@ int main() {
 			
 			// Contatore
 			indice_grafo_corr++;
+			//if(indice_grafo_corr == 158) exit(1);
 		}
 
 		// --> TopK
