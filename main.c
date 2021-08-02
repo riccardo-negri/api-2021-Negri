@@ -36,16 +36,29 @@ void MinHeapify(node_type * min_heap, unsigned int d, unsigned int heap_start, u
 	return;
 }
 
-void MaxHeapify(graph_type * max_heap, unsigned int k, unsigned int i) {
-	unsigned int max, temp_index;
+void MaxHeapify(graph_type * max_heap, unsigned int testa_heap, unsigned int heapsize, unsigned int i) {
+	unsigned int max, temp_index, l, r;
 	unsigned long int temp_value;
-	unsigned int l = 2*i;
-	unsigned int r = l+1;
 
-	if (l < k && max_heap[l].value > max_heap[i].value) max = l;
+	// l = 2*i, r = 2*i+1
+	if (i >= testa_heap) {
+		// tutto testato
+		l = 2*(i-testa_heap)+testa_heap+1;
+		r = l+1;
+		if(l >= heapsize && l-heapsize < testa_heap) l = l-heapsize;
+		if(r >= heapsize && r-heapsize < testa_heap) r = r-heapsize;
+	}
+	else {
+		l = 2*(i+heapsize-testa_heap)-(heapsize-testa_heap)+1;
+		r = l+1;
+		if( l >= testa_heap) l = heapsize;
+		if( r >= testa_heap) r = heapsize;
+	}
+
+	if (l < heapsize && max_heap[l].value > max_heap[i].value) max = l;
 	else max = i;
 
-	if (r < k && max_heap[r].value > max_heap[max].value) max = r;
+	if (r < heapsize && max_heap[r].value > max_heap[max].value) max = r;
 	//printf("--> %lu, %lu. max:%u, i:%u\n", max_heap[l].value, max_heap[i].value, max, i);
 	if (max != i) {
 		temp_index = max_heap[i].index;
@@ -54,7 +67,7 @@ void MaxHeapify(graph_type * max_heap, unsigned int k, unsigned int i) {
 		max_heap[i].value = max_heap[max].value;
 		max_heap[max].index = temp_index;
 		max_heap[max].value = temp_value;
-		MaxHeapify(max_heap, k, max);
+		MaxHeapify(max_heap, testa_heap, heapsize, max);
 	}
 
 	return;
@@ -109,10 +122,11 @@ int main() {
 	unsigned int row;
 	unsigned int col;
 	unsigned int temp_num;
-	unsigned int i, j, curr_min_id, curr_min_dist, ndist, arch_weigth, heapsize, heap_start;
+	unsigned int i, j, q, curr_min_id, curr_min_dist, ndist, arch_weigth, heapsize, heap_start;
 	unsigned long int somma_cammini;
 	unsigned int elementi_classifica = 0;
 	unsigned int indice_grafo_corr = 0;
+	unsigned int testa_heap = 0;
 	long int w; // lo uso in loop dove può diventare -1, in realtà in uno no e in uno sì
 
 	char_letto = getchar_unlocked();
@@ -219,17 +233,22 @@ int main() {
 					//StampaMaxHeap(classifica, elementi_classifica);
 					
 					for (w = k/2; w >= 0; w--) {
-						MaxHeapify(classifica, k, w);	
+						q = w + testa_heap;
+						if (q >= k) q = q - k;
+						MaxHeapify(classifica, testa_heap, k, q);	
 					}
 
+					
 					//StampaMaxHeap(classifica, elementi_classifica);
 					//printf("Finito di sistemare MaxHeap\n");
 					//printf("\n");
 					
 
-					if (somma_cammini < classifica[0].value) {
-						classifica[0].value = somma_cammini;
-						classifica[0].index = indice_grafo_corr;
+					if (somma_cammini < classifica[testa_heap].value) {
+						classifica[testa_heap].value = somma_cammini;
+						classifica[testa_heap].index = indice_grafo_corr;
+						testa_heap++;
+						if (testa_heap == k) testa_heap = 0;
 					}
 				//}
 			}
