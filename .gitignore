@@ -1,9 +1,6 @@
 #files
 main
 output
-.gdb_history
-valgrind-out.txt
-outputcallgrind
 
 #tests
 tests/

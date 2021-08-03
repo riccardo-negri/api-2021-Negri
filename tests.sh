@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "--> Starting zeroth open test"
+./main < tests/open/input_0 > output
+python compare.py output tests/open/output_0
 echo "--> Starting first open test"
 ./main < tests/open/input_1 > output
 python compare.py output tests/open/output_1
@@ -21,13 +24,19 @@ python compare.py output tests/open/output_6
 
 echo "--> Starting first private test"
 ./main < tests/private/input_1 > output
+python compare.py output tests/private/output_1
 echo "--> Starting second private test"
 ./main < tests/private/input_2 > output
+python compare.py output tests/private/output_2
 echo "--> Starting third private test"
 ./main < tests/private/input_3 > output
+python compare.py output tests/private/output_3
 echo "--> Starting fourth private test"
 ./main < tests/private/input_4 > output
+python compare.py output tests/private/output_4
 echo "--> Starting fifth private test"
 ./main < tests/private/input_5 > output
+python compare.py output tests/private/output_5
 echo "--> Starting sixth private test"
 ./main < tests/private/input_6 > output
+python compare.py output tests/private/output_6

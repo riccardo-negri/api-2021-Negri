@@ -1,7 +1,5 @@
-// My solution for Algoritmi e Principi dell'Informatica 2020-2021's project
+// Riccardo Negri's solution for Algoritmi e Principi dell'Informatica 2020-2021's Project
 #include <stdio.h>
-#include <stdlib.h>
-
 #define INFINITY 4294967295
 
 typedef struct node {
@@ -17,328 +15,218 @@ typedef struct graph {
 } graph_type;
 
 void MinHeapify(node_type * min_heap, unsigned int d, unsigned int heap_start, unsigned int i) {
-	unsigned int l, r, min, temp_id, temp_dist;
+	unsigned int l, r, min, id, dist;
 	l = 2*(i-heap_start)+heap_start;
 	r = l+1;
 	if (l < d && min_heap[l].dist < min_heap[i].dist) min = l;
 	else min = i;
-
 	if (r < d && min_heap[r].dist < min_heap[min].dist) min = r;
-
 	if (min != i) {
-		temp_id = min_heap[i].id;
-		temp_dist = min_heap[i].dist;
+		id = min_heap[i].id;
+		dist = min_heap[i].dist;
 		min_heap[i].id = min_heap[min].id;
 		min_heap[i].dist = min_heap[min].dist;
-		min_heap[min].id = temp_id;
-		min_heap[min].dist = temp_dist;
+		min_heap[min].id = id;
+		min_heap[min].dist = dist;
 		MinHeapify(min_heap, d, heap_start, min);
 	}
-
-	return;
-}
-
-void MaxHeapify(graph_type * max_heap, unsigned int k, unsigned int i) {
-	unsigned int max, temp_index;
-	unsigned long int temp_value;
-	unsigned int l = 2*i;
-	unsigned int r = l+1;
-
-	if (l < k && max_heap[l].value > max_heap[i].value) max = l;
-	else max = i;
-
-	if (r < k && max_heap[r].value > max_heap[max].value) max = r;
-	//printf("--> %lu, %lu. max:%u, i:%u\n", max_heap[l].value, max_heap[i].value, max, i);
-	if (max != i) {
-		temp_index = max_heap[i].index;
-		temp_value = max_heap[i].value;
-		max_heap[i].index = max_heap[max].index;
-		max_heap[i].value = max_heap[max].value;
-		max_heap[max].index = temp_index;
-		max_heap[max].value = temp_value;
-		MaxHeapify(max_heap, k, max);
-	}
-
-	return;
-}
-
-void StampaMatrice(unsigned int dim, unsigned int matrix[dim][dim]) {
-	unsigned int i, j;
-	for (i = 0; i < dim; i++) {
-		for (j = 0; j < dim; j++) {
-			printf("%u ", matrix[i][j]);
-		}
-		printf("\n");
-	}
-	fflush( stdout );
-	return;
-}
-
-void StampaMinHeap(node_type * min_heap, unsigned int heap_start, unsigned int d) {
-	unsigned int i;
-	unsigned int start = 1;
-	printf("[");
-	for (i = heap_start; i < d; i++) {
-		if (start == 1) {
-			start = 0;
-			printf("{id:%u, dist:%u}", min_heap[i].id, min_heap[i].dist);
-		}
-		else printf("\n{id:%u, dist:%u}", min_heap[i].id, min_heap[i].dist);
-	}
-	printf("]\n");
-	fflush( stdout );
-}
-
-void StampaMaxHeap(graph_type * min_heap, unsigned int d) {
-	unsigned int i;
-	unsigned int start = 1;
-	printf("[");
-	for (i = 0; i < d; i++) {
-		if (start == 1) {
-			start = 0;
-			printf("{ind:%u, value:%lu}", min_heap[i].index, min_heap[i].value);
-		}
-		else printf("\n{ind:%u, value:%lu}", min_heap[i].index, min_heap[i].value);
-	}
-	printf("]\n");
-	fflush( stdout );
 }
 
 int main() {
-	unsigned int d = 0; // number of nodes
-	char char_letto;
-	unsigned int k = 0; // length of top graphs ranking
-	unsigned int i, j, curr_min_id, curr_min_dist, ndist, arch_weigth, heapsize, heap_start, flag;
-	unsigned int row;
-	unsigned int temp_num;
-	unsigned int col;
-	unsigned long int somma_cammini;
-	unsigned int elementi_classifica = 0;
-	unsigned int indice_grafo_corr = 0;
-	long int w; // lo uso in loop dove può diventare -1, in realtà in uno no e in uno sì
-	graph_type * minimo_testa_lista = NULL;
-	graph_type * massimo_coda_lista = NULL;
-	graph_type * p_temp; 
-	graph_type * ex_massimo;
+	char chr;
 
-	char_letto = getchar_unlocked();
-	while(char_letto != ' ') {
-		d = d*10 + char_letto-'0';
-		char_letto = getchar_unlocked();	
+	unsigned int i, j, temp, curr_min_id, arch_weigth, heapsize, heap_start, flag, first;
+	unsigned int d = 0; // number of nodes
+	unsigned int k = 0; // length of top graphs ranking
+	unsigned int ranking_elements = 0;
+	unsigned int curr_index = 0;
+
+	unsigned long int paths_sum, curr_min_dist, new_dist;
+	
+	graph_type * head_list_minimum = NULL;
+	graph_type * tail_list_maximum = NULL;
+	graph_type * p_temp; 
+	graph_type * old_maximum;
+
+	chr = getchar_unlocked();
+	while(chr != ' ') {
+		d = d*10 + chr-'0';
+		chr = getchar_unlocked();	
 	}
 	
-	char_letto = getchar_unlocked();
-	while(char_letto != '\n') {
-		k = k*10 + char_letto-'0';
-		char_letto = getchar_unlocked();	
-	}
+	chr = getchar_unlocked();
+	while(chr != '\n') {
+		k = k*10 + chr-'0';
+		chr = getchar_unlocked();	
+	}	
 
-	//printf("Dati letti: d è %u, k è %u\n", d, k);
-	fflush( stdout );
-
-	unsigned int matrice_adiacenza[d][d];
+	unsigned int adjacency_matrix[d][d];
 	node_type min_heap_dijkstra[d];
-	graph_type classifica[k];
-	minimo_testa_lista = classifica;
-	massimo_coda_lista = classifica;
+	graph_type ranking_queue[k];
 
-	while(char_letto != EOF) {
-
-		if (char_letto == 'A') {
-			// --> Lettura e importazione
-			while (char_letto != '\n') {
-				char_letto = getchar_unlocked();	
+	while(chr != EOF) {
+		// --> AggiungiGrafo
+		if (chr == 'A') {
+			// --> Reading and acquisition
+			while (chr != '\n') {
+				chr = getchar_unlocked();	
 			}
-			for (row = 0; row < d; row++) {
-				min_heap_dijkstra[row].id = row;
-				min_heap_dijkstra[row].dist = INFINITY;
-				for (col = 0; col < d; col++) {
-					char_letto = getchar_unlocked();
-					temp_num = 0;
-					while (char_letto != ',' && char_letto != '\n') {
-						temp_num = 10*temp_num + char_letto-'0';
-						char_letto = getchar_unlocked();
+			for (i = 0; i < d; i++) {
+				min_heap_dijkstra[i].id = i;
+				min_heap_dijkstra[i].dist = INFINITY;
+				for (j = 0; j < d; j++) {
+					chr = getchar_unlocked();
+					temp = 0;
+					while (chr != ',' && chr != '\n') {
+						temp = 10*temp + chr-'0';
+						chr = getchar_unlocked();
 					}
-					matrice_adiacenza[row][col] = temp_num;
+					adjacency_matrix[i][j] = temp;
 				}
 			}
 
-			//StampaMatrice(d, matrice_adiacenza);
-
-			//printf("HERE");
-			//fflush( stdout );
-
-			// --> Calcolo somma cammini
+			// --> Computation sum of paths with Dijkstra
 			min_heap_dijkstra[0].dist = 0;
-			somma_cammini = 0;
+			paths_sum = 0;
 			for (i = 0; i < d; i++) {
 				curr_min_id = min_heap_dijkstra[i].id;
 				curr_min_dist =  min_heap_dijkstra[i].dist;
 				if(curr_min_dist < INFINITY) {
-					somma_cammini += curr_min_dist;
+					paths_sum += curr_min_dist;
 				}
 				else {
 					break;
 				}
-				//printf("Qui, curr min id: %u\n", curr_min_id);
-				fflush( stdout );
 				for (j = i+1; j<d; j++) {
-					arch_weigth = matrice_adiacenza[curr_min_id][min_heap_dijkstra[j].id];
+					arch_weigth = adjacency_matrix[curr_min_id][min_heap_dijkstra[j].id];
 					if (arch_weigth != 0) {
-						ndist = curr_min_dist + arch_weigth;
-						if (min_heap_dijkstra[j].dist > ndist) {
-							min_heap_dijkstra[j].dist = ndist;
+						new_dist = curr_min_dist + arch_weigth;
+						if (min_heap_dijkstra[j].dist > new_dist) {
+							min_heap_dijkstra[j].dist = new_dist;
 						}
 					}
 				}
-				// --> Rimetto in ordine il MinHeap ((heapsize/2)+heap_start; i >= heap_start+1; i--)
+				// --> Rebuild MinHeap
 				heapsize = d-i-1;
 				heap_start = i+1;
-				//printf("Parto con MinHeapify: heapsize of %u, heap start at %u\n", heapsize, heap_start);
-				fflush( stdout );
-				//StampaMinHeap(min_heap_dijkstra, heap_start, d);
-
-				for (w = ((heapsize)/2)+heap_start; w >= heap_start; w--) {
-					//printf("w:%lu\n", w);
-					MinHeapify(min_heap_dijkstra, d, heap_start, w);
-				}
-
-				//printf("Finito di sistemare il MinHeap\n");
-				//StampaMinHeap(min_heap_dijkstra, heap_start, d);
-				//printf("\n");
-				fflush( stdout );
-			}
-
-			// --> Inserimento nella classifica dei grafi
-			if (elementi_classifica < k) {
-				classifica[elementi_classifica].index = indice_grafo_corr;
-				classifica[elementi_classifica].value = somma_cammini;
-				elementi_classifica++;
-				if(elementi_classifica == 2) {
-					if(classifica[0].value < classifica[1].value){
-						minimo_testa_lista = &classifica[0];
-						massimo_coda_lista = &classifica[1];
-						classifica[0].next = &classifica[1];
-						classifica[0].prev = NULL;
-						classifica[1].next = NULL;
-						classifica[1].prev = &classifica[0];
-					}
-					else {
-						minimo_testa_lista = &classifica[1];
-						massimo_coda_lista = &classifica[0];
-						classifica[1].next = &classifica[0];
-						classifica[1].prev = NULL;
-						classifica[0].next = NULL;
-						classifica[0].prev = &classifica[1];
-					}
-				}	
-				else if (elementi_classifica > 2) {
-					p_temp = minimo_testa_lista;
-					if(p_temp->value > somma_cammini) {
-						classifica[elementi_classifica-1].next = minimo_testa_lista;
-						classifica[elementi_classifica-1].prev = NULL;
-						minimo_testa_lista->prev = &classifica[elementi_classifica-1];
-						minimo_testa_lista = &classifica[elementi_classifica-1];
-					}
-					else {
-						while(p_temp->next != NULL) {
-							if(p_temp->next->value > somma_cammini) {
-								classifica[elementi_classifica-1].next = p_temp->next;
-								classifica[elementi_classifica-1].prev = p_temp;
-								p_temp->next->prev = &classifica[elementi_classifica-1];
-								p_temp->next = &classifica[elementi_classifica-1];
-								break;
-							}
-							p_temp = p_temp->next;
-						}
-						if(p_temp->next == NULL) {
-							p_temp->next = &classifica[elementi_classifica-1];
-							classifica[elementi_classifica-1].prev = p_temp;
-							classifica[elementi_classifica-1].next = NULL;
-							massimo_coda_lista = &classifica[elementi_classifica-1];
-						}
-					}
-
-				}
-			}
-			else {
-				flag = 0;
-				if (somma_cammini < massimo_coda_lista->value) {
-					// lo aggiungo dalla testa per superare i test della famiglia 5
-					if (somma_cammini < minimo_testa_lista->value) {
-						ex_massimo = massimo_coda_lista;
-						massimo_coda_lista = massimo_coda_lista->prev;
-						massimo_coda_lista->next = NULL;
-						ex_massimo->index = indice_grafo_corr;
-						ex_massimo->value = somma_cammini;
-						ex_massimo->prev = NULL;
-						ex_massimo->next = minimo_testa_lista;
-						minimo_testa_lista->prev = ex_massimo;
-						minimo_testa_lista = ex_massimo;
-						flag = 1;
-					}
-					else {
-						p_temp = minimo_testa_lista->next;
-						while(p_temp->next != NULL) {
-							if (somma_cammini < p_temp->value) {
-								ex_massimo = massimo_coda_lista;
-								massimo_coda_lista = massimo_coda_lista->prev;
-								
-								ex_massimo->index = indice_grafo_corr;
-								ex_massimo->value = somma_cammini;
-								ex_massimo->prev = p_temp->prev;
-								ex_massimo->next = p_temp;
-								p_temp->prev = ex_massimo;
-								ex_massimo->prev->next = ex_massimo;
-								massimo_coda_lista->next = NULL;
-								flag = 1;
-								break;
-								
-							}
-							p_temp = p_temp->next;
-						}
-						// ultimo
-						if(p_temp->next == NULL && somma_cammini < p_temp->value && flag == 0) {
-							massimo_coda_lista->index = indice_grafo_corr;
-							massimo_coda_lista->value = somma_cammini;
-							flag = 1;
-						}
-					}
+				for (j = ((heapsize)/2)+heap_start; j >= heap_start; j--) {
+					MinHeapify(min_heap_dijkstra, d, heap_start, j);
 				}
 				
 			}
 
-			//p_temp = minimo_testa_lista;
-			//printf("-------------\n");
-			//while(p_temp != NULL) {
-			//	printf("{ind: %u, value: %lu}\n", p_temp->index, p_temp->value);
-			//	p_temp = p_temp->next;
-			//}
+			// --> Insertion of new graph in ranking (queue as a list with head as minimum and tail as maximum)
+			if (ranking_elements < k) {	// Vacant spots available
+				ranking_queue[ranking_elements].index = curr_index;
+				ranking_queue[ranking_elements].value = paths_sum;
+				ranking_elements++;
+				if(ranking_elements == 2) {
+					if(ranking_queue[0].value < ranking_queue[1].value) {
+						head_list_minimum = &ranking_queue[0];
+						tail_list_maximum = &ranking_queue[1];
+						ranking_queue[0].next = &ranking_queue[1];
+						ranking_queue[0].prev = NULL;
+						ranking_queue[1].next = NULL;
+						ranking_queue[1].prev = &ranking_queue[0];
+					}
+					else {
+						head_list_minimum = &ranking_queue[1];
+						tail_list_maximum = &ranking_queue[0];
+						ranking_queue[1].next = &ranking_queue[0];
+						ranking_queue[1].prev = NULL;
+						ranking_queue[0].next = NULL;
+						ranking_queue[0].prev = &ranking_queue[1];
+					}
+				}	
+				else if (ranking_elements > 2) {
+					p_temp = head_list_minimum;
+					if(p_temp->value > paths_sum) {	// head
+						ranking_queue[ranking_elements-1].next = head_list_minimum;
+						ranking_queue[ranking_elements-1].prev = NULL;
+						head_list_minimum->prev = &ranking_queue[ranking_elements-1];
+						head_list_minimum = &ranking_queue[ranking_elements-1];
+					}
+					else {
+						while(p_temp->next != NULL) {	// middle
+							if(p_temp->next->value > paths_sum) {
+								ranking_queue[ranking_elements-1].next = p_temp->next;
+								ranking_queue[ranking_elements-1].prev = p_temp;
+								p_temp->next->prev = &ranking_queue[ranking_elements-1];
+								p_temp->next = &ranking_queue[ranking_elements-1];
+								break;
+							}
+							p_temp = p_temp->next;
+						}
+						if(p_temp->next == NULL) {	// tail
+							p_temp->next = &ranking_queue[ranking_elements-1];
+							ranking_queue[ranking_elements-1].prev = p_temp;
+							ranking_queue[ranking_elements-1].next = NULL;
+							tail_list_maximum = &ranking_queue[ranking_elements-1];
+						}
+					}
+
+				}
+			}
+			else {	// No vacant spot available	
+				if (paths_sum < tail_list_maximum->value) {				
+					if (paths_sum < head_list_minimum->value) {	//head
+						old_maximum = tail_list_maximum;
+						tail_list_maximum = tail_list_maximum->prev;
+						tail_list_maximum->next = NULL;
+						old_maximum->index = curr_index;
+						old_maximum->value = paths_sum;
+						old_maximum->prev = NULL;
+						old_maximum->next = head_list_minimum;
+						head_list_minimum->prev = old_maximum;
+						head_list_minimum = old_maximum;
+					}
+					else {
+						flag = 0;
+						p_temp = head_list_minimum->next;
+						while(p_temp->next != NULL) {	// middle
+							if (paths_sum < p_temp->value) {
+								old_maximum = tail_list_maximum;
+								tail_list_maximum = tail_list_maximum->prev;
+								old_maximum->index = curr_index;
+								old_maximum->value = paths_sum;
+								old_maximum->prev = p_temp->prev;
+								old_maximum->next = p_temp;
+								p_temp->prev = old_maximum;
+								old_maximum->prev->next = old_maximum;
+								tail_list_maximum->next = NULL;
+								flag = 1;
+								break;
+							}
+							p_temp = p_temp->next;
+						}
+						if(p_temp->next == NULL && paths_sum < p_temp->value && flag == 0) {	// tail
+							tail_list_maximum->index = curr_index;
+							tail_list_maximum->value = paths_sum;
+						}
+					}
+				}		
+			}
 			
-			// Contatore
-			indice_grafo_corr++;
-			//if(indice_grafo_corr == 158) exit(1);
+			// Graph index counter
+			curr_index++;
 		}
 
 		// --> TopK
-		else if (char_letto == 'K') {
-			// --> Stampa classifica
-			//printf("Stampa classifica: \n");
-			fflush( stdout );
-
-			int start = 1;
-			for (int i = 0; i < elementi_classifica; i++) {
-				if (start == 1) {
-					printf("%d", classifica[i].index);
-					start = 0;
+		else if (chr == 'K') {
+			// --> Print ranking
+			first = 1;
+			for (int i = 0; i < ranking_elements; i++) {
+				if (first == 1) {
+					printf("%d", ranking_queue[i].index);
+					first = 0;
 				}
 				else {
-					printf(" %d", classifica[i].index);
+					printf(" %d", ranking_queue[i].index);
 				}
 			}
 			printf("\n");
 		}
 
-		char_letto = getchar_unlocked();
+		chr = getchar_unlocked();
 	}	
 }
