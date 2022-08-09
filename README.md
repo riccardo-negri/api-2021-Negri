@@ -15,3 +15,9 @@ The program was complied with the following command (C11/gcc):
 ```
 
 The program was evaluated by a simulator run by the university.
+
+## Execute
+To compile the program and run it against all the tests just run in a terminal
+```shell
+make
+```
