@@ -8,7 +8,7 @@ The project consists in the development of an extremely optimized software to ra
 The specifications (in Italian) can be found [here](https://github.com/riccardo-negri/api-2021-Negri/tree/main/specs/specifications.pdf).
 
 ## Development
-The command was complied with the following command (C11/gcc):
+The program was complied with the following command (C11/gcc):
 
 ```shell
 /usr/bin/gcc -DEVAL -Wall -Werror -std=gnu11 -O2 -pipe -static -s -o main main.c -lm
